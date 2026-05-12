@@ -346,8 +346,8 @@
     letter-spacing: 0.04em;
   }
 
-  /* Restart button */
-  .restart-btn {
+  /* Header buttons */
+  .restart-btn, .export-btn {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-muted);
@@ -361,7 +361,7 @@
     transition: all 0.2s;
   }
 
-  .restart-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+  .restart-btn:hover, .export-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
 
   .model-select {
     background: transparent;
@@ -427,6 +427,22 @@
     margin-left: auto;
   }
   .attachment-chip button:hover { color: var(--accent); }
+
+  @media print {
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    body { height: auto !important; overflow: visible !important; }
+    .chat-area { overflow: visible !important; height: auto !important; flex: none !important; }
+    .model-select,
+    .phase-indicator,
+    .restart-btn,
+    .export-btn,
+    .progress-bar,
+    .input-area,
+    #typingIndicator { display: none !important; }
+    header { border-bottom: 1px solid #2a2a2a; }
+    .msg.ai .bubble { background: #161a1e !important; border: 1px solid #2a2a2a !important; }
+    .msg.user .bubble { background: #1a1a14 !important; border: 1px solid #2a2a1e !important; }
+  }
 </style>
 </head>
 <body>
@@ -448,6 +464,8 @@
       <div class="phase-dot" title="Phase 2: Brand Pyramid"></div>
       <div class="phase-dot" title="Phase 3: Complete"></div>
     </div>
+    <button class="export-btn" onclick="exportMarkdown()" title="Export as Markdown">&#x2193; MD</button>
+    <button class="export-btn" onclick="exportPDF()" title="Export as PDF">&#x2399; PDF</button>
     <button class="restart-btn" onclick="restartGame()">&#x21BA; Restart</button>
   </div>
 </header>
@@ -775,6 +793,34 @@ function restartGame() {
   document.getElementById('messagesWrap').innerHTML = '';
   updateProgress(0);
   startSession();
+}
+
+function exportMarkdown() {
+  if (conversationHistory.length === 0) return;
+  const date = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+  let md = `# Category Designer Session\n_Exported: ${date}_\n\n---\n\n`;
+
+  for (const msg of conversationHistory) {
+    if (msg.role === 'user' && msg.content === 'Hello, I want to go through the Category Design Game.') continue;
+    const label = msg.role === 'user' ? '**You:**' : '**Category Strategist:**';
+    const text = Array.isArray(msg.content)
+      ? (msg.content.find(b => b.type === 'text')?.text ?? '')
+      : msg.content;
+    md += `${label}\n\n${text}\n\n---\n\n`;
+  }
+
+  const filename = `category-session-${new Date().toISOString().split('T')[0]}.md`;
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportPDF() {
+  window.print();
 }
 
 async function startSession() {
