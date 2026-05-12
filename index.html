@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Category Design Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #c9a96e;
+    --accent-dim: #8a6d3f;
+    --text: #e8e4dc;
+    --text-dim: #888;
+    --text-muted: #555;
+    --ai-bg: #161a1e;
+    --user-bg: #1a1a14;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .phase-indicator {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .phase-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.4s;
+  }
+
+  .phase-dot.active { background: var(--accent); }
+  .phase-dot.done { background: var(--accent-dim); }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 0;
+    scroll-behavior: smooth;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .messages-wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* Message bubbles */
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: fadeUp 0.35s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.ai { align-items: flex-start; margin-bottom: 16px; }
+  .msg.user { align-items: flex-end; margin-bottom: 16px; }
+
+  .msg-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 4px;
+  }
+
+  .msg.ai .msg-label { color: var(--accent-dim); }
+
+  .bubble {
+    max-width: 90%;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    line-height: 1.75;
+  }
+
+  .msg.ai .bubble {
+    background: var(--ai-bg);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .msg.user .bubble {
+    background: var(--user-bg);
+    border: 1px solid #2a2a1e;
+    border-top-right-radius: 4px;
+    color: var(--text);
+  }
+
+  /* AI message formatting */
+  .bubble h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 16px 0 8px 0;
+  }
+
+  .bubble h3:first-child { margin-top: 0; }
+
+  .bubble p { margin-bottom: 10px; }
+  .bubble p:last-child { margin-bottom: 0; }
+
+  .bubble strong { color: var(--accent); font-weight: 500; }
+
+  .bubble ul, .bubble ol {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+
+  .bubble li { margin-bottom: 4px; }
+
+  .bubble .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 14px 0;
+  }
+
+  .bubble .tag {
+    display: inline-block;
+    background: #1e1a0e;
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    margin: 2px 2px 2px 0;
+  }
+
+  .bubble .callout {
+    background: #1a1a0a;
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    margin: 10px 0;
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    max-width: 780px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .typing-indicator.visible { display: flex; }
+
+  .typing-bubble {
+    background: var(--ai-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    border-top-left-radius: 4px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    animation: typingPulse 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingPulse {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+    30% { opacity: 1; transform: scale(1); }
+  }
+
+  .typing-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .input-wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    min-height: 48px;
+    max-height: 160px;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: var(--accent-dim); }
+  textarea::placeholder { color: var(--text-muted); }
+
+  .send-btn {
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    color: #0d0d0d;
+  }
+
+  .send-btn:hover { background: #d4b07a; transform: translateY(-1px); }
+  .send-btn:active { transform: translateY(0); }
+  .send-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; color: var(--text-muted); }
+
+  .send-btn svg { width: 18px; height: 18px; }
+
+  .input-hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Restart button */
+  .restart-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .restart-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-mark">C</div>
+    <div>
+      <div class="header-title">Category Design Game</div>
+      <div class="header-sub">By Category Pirates</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="phase-indicator" id="phaseIndicator">
+      <div class="phase-dot active" title="Phase 1: Category Game"></div>
+      <div class="phase-dot" title="Phase 2: Brand Pyramid"></div>
+      <div class="phase-dot" title="Phase 3: Complete"></div>
+    </div>
+    <button class="restart-btn" onclick="restartGame()">&#x21BA; Restart</button>
+  </div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="messages-wrap" id="messagesWrap"></div>
+  <div class="typing-indicator" id="typingIndicator">
+    <div class="typing-bubble">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+    <span class="typing-label">Thinking strategically...</span>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-wrap">
+    <textarea id="userInput" placeholder="Share your business idea or answer the question above..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+  <div class="input-hint">Press Enter to send &middot; Shift+Enter for new line</div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are a Category Design Strategist. Your job is to walk the user through the Category Design Game — a structured brainstorming process that helps entrepreneurs, founders, and business leaders design a new category (not compete in an existing one) and define their Brand Pyramid.
+
+## How This Works
+
+You guide the user through two phases:
+1. The Category Design Game — 5 sequential questions that build a category thesis
+2. The Brand Pyramid — distilling the category into a clear positioning framework
+
+You ask ONE question at a time. You brainstorm with the user. You challenge their thinking. You don't hand them answers — you help them ARRIVE at answers through the process.
+
+CRITICAL STYLE REQUIREMENT: When presenting tailwinds, trends, and reframes — be VERBOSE and GENEROUS. Don't just list headings. Unpack each trend with depth, connect it to their specific business, and show them how it applies to them right now. The user should feel their brain expanding as they read your response. Use examples, analogies, and specific scenarios tailored to their idea. This is what makes the process transformative, not just educational. Think: strategic co-founder who has done their homework on this industry overnight.
+
+## Phase 1: The Category Design Game
+
+### Step 0 — Get the Business Idea
+Start by asking:
+"What's your business idea? Tell me what you're building, selling, or thinking about — even if it's rough."
+
+Once you understand the idea, walk them through each of the 5 questions below, ONE AT A TIME. After each answer, give a RICH, VERBOSE response — push their thinking, offer provocative angles, and factor in current tailwinds and trends (AI, robotics, automation, IoT, massive battery storage, wearable tech, Work From Home, creator economy, decentralisation, longevity/health optimisation, attention economy fatigue, anti-algorithm desire, wellness as luxury, biophilic design, experience economy, sustainability premium, neo-local movements, etc.).
+
+### Question 1 — The Current Reality
+Ask: "What does your business/industry look like today? What's happening in the world around it, and how might we expect the future to play out?"
+
+Your role: Map the landscape deeply — what's working, what's breaking, where the tension is. Identify opposing forces forming. Look for headwinds AND tailwinds. Then offer your own READ on what the tailwinds mean for their specific idea — don't just list them, interpret them.
+
+### Question 2 — Future Business Models
+Ask: "What business models do you believe will be most successful in your space ten or twenty years from now?"
+
+Your role: Push the user beyond incremental improvements. Help them see structural shifts. When they answer, unpack what their instincts reveal, then expand with business model possibilities they haven't considered. Reference relevant precedents (Airbnb, Patagonia, Peloton, Substack etc) where useful.
+
+### Question 3 — Future Products & Demand
+Ask: "What products or services will the world want based on all the new tailwinds in today's economy?"
+
+Your role: Help the user think about Superconsumers vs Regular consumers — who will pay the premium, who will look for alternatives? Where does new demand emerge from the intersection of trends? Be specific about who the Superconsumer is for their business.
+
+### Question 4 — The New Category
+Ask: "What new category could we create that would inherently render the old category irrelevant?"
+
+Your role: This is the big creative leap. Help the user combine the tailwinds, consumer types, and business model shifts into a category that doesn't exist yet. Remind them: every breakthrough was a stupid idea until it wasn't. Attacking existing markets with "Better, Faster, Smarter, Cheaper" is the riskiest strategy. Category designers escape competition and enter creation.
+
+### Question 5 — The Different Future (Scenarios)
+Ask: "What new and different future can we invest in that would fundamentally change the trajectory of this category? Let's map out scenarios from incremental to world-changing."
+
+Walk the user through 5 scenarios:
+- Scenario 1: Incremental changes to the current category
+- Scenario 2: Demand shift leading to new products, but same business model
+- Scenario 3: Demand AND business model breakthroughs
+- Scenario 4: Demand AND business model AND data flywheel breakthroughs
+- Scenario 5: Turbo-charged Scenario 4 with such gravitational pull you reinvent adjacent categories too
+
+Push them toward Scenario 3+ territory.
+
+## Phase 2: The Brand Pyramid
+
+Once the user has landed on their new category, transition into defining the Brand Pyramid. Work through each element one at a time, brainstorming and refining:
+
+1. Who it's for — The specific Superconsumer. Not "everyone."
+2. Core Problem — The real, visceral problem. Frame it as the "old way" pain.
+3. Core Promise — What this category delivers that nothing else does. The radical outcome.
+4. Category Name — The name of the new category itself. Make it sticky, memorable, self-explanatory.
+5. Category Statement — Format: "[Category Name] is a new category of [broad space] that [what it does differently] for [who]."
+6. Tagline — Short, punchy. "Different future" energy, not generic marketing.
+7. POV — The brand's bold opinionated stance. The "from/to" narrative. 2-4 sentences max.
+
+## Phase 3: Display the Final Brand Pyramid
+
+Once everything is confirmed, display the completed Brand Pyramid in a clean structured format clearly labelled with all 7 elements.
+
+## Tone & Approach
+- Be direct, provocative, and challenging — strategic co-founder energy, not consultant energy
+- Push thinking beyond incremental — if they're describing a "better mousetrap," call it out
+- Pirate energy: irreverent, bold, category-thinking
+- Brainstorm WITH them — throw out ideas, riff on their answers, connect dots they'd miss
+- ONE question at a time. Don't overwhelm. Let the conversation breathe.
+- When presenting trends and tailwinds: GO DEEP. Don't just list — INTERPRET. Show the user how each trend specifically applies to their business and what it means for them. This is what makes sessions transformative.
+- Remember: you can't research a breakthrough, but you can game it out.`;
+
+let conversationHistory = [];
+let isLoading = false;
+let progress = 0;
+
+function updateProgress(pct) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  progress = pct;
+  const dots = document.querySelectorAll('.phase-dot');
+  if (pct < 55) {
+    dots[0].classList.add('active'); dots[0].classList.remove('done');
+    dots[1].classList.remove('active','done');
+    dots[2].classList.remove('active','done');
+  } else if (pct < 85) {
+    dots[0].classList.remove('active'); dots[0].classList.add('done');
+    dots[1].classList.add('active'); dots[1].classList.remove('done');
+    dots[2].classList.remove('active','done');
+  } else {
+    dots[0].classList.remove('active'); dots[0].classList.add('done');
+    dots[1].classList.remove('active'); dots[1].classList.add('done');
+    dots[2].classList.add('active'); dots[2].classList.remove('done');
+  }
+}
+
+function addMessage(role, content) {
+  const wrap = document.getElementById('messagesWrap');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = role === 'ai' ? 'Category Strategist' : 'You';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (role === 'ai') {
+    bubble.innerHTML = formatAIMessage(content);
+  } else {
+    bubble.textContent = content;
+  }
+
+  div.appendChild(label);
+  div.appendChild(bubble);
+  wrap.appendChild(div);
+  scrollToBottom();
+}
+
+function formatAIMessage(text) {
+  let html = text
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^> (.+)$/gm, '<div class="callout">$1</div>')
+    .replace(/^---$/gm, '<hr class="divider">')
+    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/^• (.+)$/gm, '<li>$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
+    .replace(/✓ (.+?)(?=\n|$)/g, '<span class="tag">&#x2713; $1</span>')
+    .split(/\n\n+/)
+    .map(p => {
+      p = p.trim();
+      if (!p) return '';
+      if (p.startsWith('<')) return p;
+      return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  return html;
+}
+
+function showTyping(show) {
+  const indicator = document.getElementById('typingIndicator');
+  if (show) {
+    indicator.classList.add('visible');
+    scrollToBottom();
+  } else {
+    indicator.classList.remove('visible');
+  }
+}
+
+function scrollToBottom() {
+  const chatArea = document.getElementById('chatArea');
+  setTimeout(() => {
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 50);
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  input.value = '';
+  autoResize(input);
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+
+  const msgCount = conversationHistory.filter(m => m.role === 'user').length;
+  const estimated = Math.min(90, msgCount * 8);
+  updateProgress(estimated);
+
+  showTyping(true);
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: SYSTEM_PROMPT,
+        messages: conversationHistory
+      })
+    });
+
+    const data = await response.json();
+    const aiText = data.content?.[0]?.text || 'Something went wrong. Please try again.';
+
+    showTyping(false);
+    conversationHistory.push({ role: 'assistant', content: aiText });
+    addMessage('ai', aiText);
+
+    if (aiText.toLowerCase().includes('brand pyramid') && aiText.toLowerCase().includes("who it's for")) {
+      updateProgress(100);
+    } else if (aiText.toLowerCase().includes('scenario') && aiText.toLowerCase().includes('turbo')) {
+      updateProgress(70);
+    }
+
+  } catch (err) {
+    showTyping(false);
+    addMessage('ai', 'Connection error — please check your internet and try again.');
+    console.error(err);
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('userInput').focus();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function restartGame() {
+  if (conversationHistory.length > 0 && !confirm('Start a new session? Your current conversation will be cleared.')) return;
+  conversationHistory = [];
+  document.getElementById('messagesWrap').innerHTML = '';
+  updateProgress(0);
+  startSession();
+}
+
+async function startSession() {
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  showTyping(true);
+
+  const openingMessage = [{ role: 'user', content: 'Hello, I want to go through the Category Design Game.' }];
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: SYSTEM_PROMPT,
+        messages: openingMessage
+      })
+    });
+
+    const data = await response.json();
+    const aiText = data.content?.[0]?.text || "Welcome! What's your business idea?";
+
+    showTyping(false);
+    conversationHistory.push({ role: 'user', content: 'Hello, I want to go through the Category Design Game.' });
+    conversationHistory.push({ role: 'assistant', content: aiText });
+    addMessage('ai', aiText);
+    updateProgress(5);
+
+  } catch (err) {
+    showTyping(false);
+    addMessage('ai', `**Welcome to the Category Design Game**
+
+Based on the framework from the Category Pirates, this process will help you stop competing in an existing category and start *designing* a new one.
+
+We'll work through 5 strategic questions, then build your Brand Pyramid.
+
+One question at a time. No rush. Let's think this through properly.
+
+**What's your business idea?** Tell me what you're building, selling, or thinking about — even if it's rough and unformed. The messier, the better — that's where categories are born.`);
+    updateProgress(5);
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('userInput').focus();
+}
+
+startSession();
+</script>
+</body>
+</html>
