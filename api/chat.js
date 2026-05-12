@@ -8,8 +8,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
+  const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
+
   try {
-    const { system, messages } = req.body;
+    const { system, messages, model } = req.body;
+    const safeModel = ALLOWED_MODELS.includes(model) ? model : 'claude-sonnet-4-6';
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -19,7 +22,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: safeModel,
         max_tokens: 1500,
         system,
         messages,

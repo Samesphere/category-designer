@@ -362,6 +362,71 @@
   }
 
   .restart-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+  .model-select {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+  }
+  .model-select:hover, .model-select:focus { border-color: var(--accent-dim); color: var(--accent); }
+  .model-select option { background: var(--surface2); color: var(--text); text-transform: none; letter-spacing: 0; }
+
+  .attach-btn {
+    width: 38px;
+    height: 48px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    color: var(--text-muted);
+  }
+  .attach-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+  .attach-btn svg { width: 16px; height: 16px; }
+
+  .attachment-chip {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    max-width: 780px;
+    margin: 0 auto 8px;
+    background: #1e1a0e;
+    border: 1px solid var(--accent-dim);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .attachment-chip button {
+    background: none;
+    border: none;
+    color: var(--accent-dim);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    margin-left: auto;
+  }
+  .attachment-chip button:hover { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -370,11 +435,14 @@
   <div class="header-left">
     <div class="logo-mark">C</div>
     <div>
-      <div class="header-title">Category Design Game</div>
-      <div class="header-sub">By Category Pirates</div>
+      <div class="header-title">Category Designer</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
+    <select id="modelSelect" class="model-select" title="Model">
+      <option value="claude-sonnet-4-6" selected>Sonnet 4.6</option>
+      <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+    </select>
     <div class="phase-indicator" id="phaseIndicator">
       <div class="phase-dot active" title="Phase 1: Category Game"></div>
       <div class="phase-dot" title="Phase 2: Brand Pyramid"></div>
@@ -400,8 +468,19 @@
   </div>
 </div>
 
+<input type="file" id="fileInput" accept=".txt,.md,.html,.pdf" style="display:none" onchange="handleFileSelect(event)">
+
 <div class="input-area">
+  <div class="attachment-chip" id="attachmentChip">
+    <span id="attachmentName"></span>
+    <button onclick="clearAttachment()" title="Remove attachment">&#x2715;</button>
+  </div>
   <div class="input-wrap">
+    <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach file (txt, md, html, pdf)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+      </svg>
+    </button>
     <textarea id="userInput" placeholder="Share your business idea or answer the question above..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
     <button class="send-btn" id="sendBtn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -410,7 +489,7 @@
       </svg>
     </button>
   </div>
-  <div class="input-hint">Press Enter to send &middot; Shift+Enter for new line</div>
+  <div class="input-hint">Press Enter to send &middot; Shift+Enter for new line &middot; Paperclip to attach a file</div>
 </div>
 
 <script>
@@ -494,6 +573,7 @@ Once everything is confirmed, display the completed Brand Pyramid in a clean str
 let conversationHistory = [];
 let isLoading = false;
 let progress = 0;
+let pendingFile = null;
 
 function updateProgress(pct) {
   document.getElementById('progressFill').style.width = pct + '%';
@@ -514,7 +594,7 @@ function updateProgress(pct) {
   }
 }
 
-function addMessage(role, content) {
+function addMessage(role, content, fileName) {
   const wrap = document.getElementById('messagesWrap');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
@@ -530,12 +610,50 @@ function addMessage(role, content) {
     bubble.innerHTML = formatAIMessage(content);
   } else {
     bubble.textContent = content;
+    if (fileName) {
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.style.display = 'block';
+      tag.style.marginTop = '8px';
+      tag.textContent = '📎 ' + fileName;
+      bubble.appendChild(tag);
+    }
   }
 
   div.appendChild(label);
   div.appendChild(bubble);
   wrap.appendChild(div);
   scrollToBottom();
+}
+
+async function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const isPDF = ext === 'pdf';
+  const mediaType = isPDF ? 'application/pdf' : ext === 'md' ? 'text/markdown' : ext === 'html' ? 'text/html' : 'text/plain';
+
+  if (isPDF) {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    const base64 = btoa(binary);
+    pendingFile = { name: file.name, documentBlock: { type: 'document', source: { type: 'base64', media_type: mediaType, data: base64 } } };
+  } else {
+    const text = await file.text();
+    pendingFile = { name: file.name, documentBlock: { type: 'document', source: { type: 'text', media_type: mediaType, data: text } } };
+  }
+
+  document.getElementById('attachmentName').textContent = '📎 ' + file.name;
+  document.getElementById('attachmentChip').style.display = 'flex';
+  event.target.value = '';
+}
+
+function clearAttachment() {
+  pendingFile = null;
+  document.getElementById('attachmentChip').style.display = 'none';
+  document.getElementById('attachmentName').textContent = '';
 }
 
 function formatAIMessage(text) {
@@ -590,8 +708,13 @@ async function sendMessage() {
   isLoading = true;
   document.getElementById('sendBtn').disabled = true;
 
-  addMessage('user', text);
-  conversationHistory.push({ role: 'user', content: text });
+  const model = document.getElementById('modelSelect').value;
+  const fileAttached = pendingFile;
+  const content = fileAttached ? [{ type: 'text', text }, fileAttached.documentBlock] : text;
+
+  addMessage('user', text, fileAttached?.name);
+  clearAttachment();
+  conversationHistory.push({ role: 'user', content });
 
   const msgCount = conversationHistory.filter(m => m.role === 'user').length;
   const estimated = Math.min(90, msgCount * 8);
@@ -604,6 +727,7 @@ async function sendMessage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        model,
         system: SYSTEM_PROMPT,
         messages: conversationHistory
       })
@@ -661,10 +785,12 @@ async function startSession() {
   const openingMessage = [{ role: 'user', content: 'Hello, I want to go through the Category Design Game.' }];
 
   try {
+    const model = document.getElementById('modelSelect').value;
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        model,
         system: SYSTEM_PROMPT,
         messages: openingMessage
       })
