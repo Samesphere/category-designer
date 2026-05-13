@@ -364,7 +364,10 @@
   .restart-btn:hover, .export-btn:hover { background: #d4b07a; border-color: #d4b07a; }
 
   .model-select {
-    background: var(--accent);
+    background-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%230d0d0d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
     border: 1px solid var(--accent);
     color: #0d0d0d;
     font-family: 'DM Sans', sans-serif;
@@ -372,18 +375,15 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 5px 10px;
+    padding-right: 20px;
     border-radius: 6px;
     cursor: pointer;
     outline: none;
-    transition: all 0.2s;
     appearance: none;
     -webkit-appearance: none;
-    padding-right: 20px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%230d0d0d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 6px center;
+    transition: background-color 0.2s, border-color 0.2s;
   }
-  .model-select:hover, .model-select:focus { background: #d4b07a; border-color: #d4b07a; }
+  .model-select:hover, .model-select:focus { background-color: #d4b07a; border-color: #d4b07a; }
   .model-select option { background: var(--surface2); color: var(--text); text-transform: none; letter-spacing: 0; }
 
   .attach-btn {
