@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Category Design Game</title>
+<title>Category Designer</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -429,9 +429,12 @@
   .attachment-chip button:hover { color: var(--accent); }
 
   @media print {
-    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    body { height: auto !important; overflow: visible !important; }
-    .chat-area { overflow: visible !important; height: auto !important; flex: none !important; }
+    /* layout: let full conversation render */
+    body { height: auto !important; overflow: visible !important; background: white !important; color: black !important; }
+    .chat-area { overflow: visible !important; height: auto !important; flex: none !important; background: white !important; }
+    .messages-wrap { background: white !important; }
+
+    /* hide UI chrome */
     .model-select,
     .phase-indicator,
     .restart-btn,
@@ -439,9 +442,46 @@
     .progress-bar,
     .input-area,
     #typingIndicator { display: none !important; }
-    header { border-bottom: 1px solid #2a2a2a; }
-    .msg.ai .bubble { background: #161a1e !important; border: 1px solid #2a2a2a !important; }
-    .msg.user .bubble { background: #1a1a14 !important; border: 1px solid #2a2a1e !important; }
+
+    /* header */
+    header { background: white !important; border-bottom: 1px solid #000 !important; }
+    .logo-mark { border-color: #000 !important; color: #000 !important; }
+    .header-title { color: #000 !important; }
+
+    /* message labels */
+    .msg-label { color: #000 !important; }
+    .msg.ai .msg-label { color: #000 !important; }
+
+    /* chat bubbles — white bg, black border, black text */
+    .msg.ai .bubble,
+    .msg.user .bubble {
+      background: #fff !important;
+      border: 1px solid #000 !important;
+      color: #000 !important;
+    }
+
+    /* gold headings → blue */
+    .bubble h3 { color: #1a56b0 !important; }
+
+    /* gold bold text → black */
+    .bubble strong { color: #000 !important; font-weight: 600 !important; }
+
+    /* callout block */
+    .bubble .callout {
+      background: #f4f6fb !important;
+      border-left-color: #1a56b0 !important;
+      color: #333 !important;
+    }
+
+    /* tags */
+    .bubble .tag {
+      background: #eef2fb !important;
+      border-color: #1a56b0 !important;
+      color: #1a56b0 !important;
+    }
+
+    /* dividers */
+    .bubble .divider { border-top-color: #ccc !important; }
   }
 </style>
 </head>
